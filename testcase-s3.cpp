@@ -3,21 +3,9 @@
 using namespace std;
 
 
-// Label RDP
-void findLabels(){
-
-    tokenPointer = head;
-    while (tokenPointer->next != NULL){
-        tokenPointer = tokenPointer->next;
-        if (tokenPointer->tokenCode == CODE_S_LABEL){
-
-        }
-    }
-}
-
 // Main function
 int main(){
-    lexicalAnalysis();
+    struct Token * lastToken = lexicalAnalysis(NULL);
     // Print out all the tokens
     struct Token * tokenPointer = head;
     while (tokenPointer->next != NULL){
@@ -25,8 +13,16 @@ int main(){
         cout << tokenPointer->tokenClass << "\t" << tokenPointer->tokenCode << "\t" << tokenPointer->value.str() << endl;
     }
 
-    // Check labels
-    // Start Execution
+    cout << "The last token is:" << endl << lastToken->value.str() << endl;
+    cout << "=================================" << endl;
 
+    // Check labels
+    struct Label * lastLabel = checkLabel(labelList, head);
+    struct Label * labelPointer = labelList;
+    // Start Execution
+    while (labelPointer->next != NULL){
+        labelPointer = labelPointer->next;
+        cout << (* labelPointer->variableName).str() << endl;
+    }
 
 }

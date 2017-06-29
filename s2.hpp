@@ -33,4 +33,4 @@ struct Token{
 extern struct Token * head;
 
 // Declare function
-void lexicalAnalysis();
+struct Token * lexicalAnalysis(struct Token * currentToken);

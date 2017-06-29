@@ -1,6 +1,6 @@
-#include <iostream>
-#include <sstream>
-#include <string>
+#include "s2.hpp"
+
+using namespace std;
 
 struct Variable {
     std::stringstream * variableName;
@@ -20,4 +20,4 @@ extern struct Variable * variableList;
 extern struct Label * labelList;
 
 // Declare function
-struct Token * execute(struct Token * startPoint);
+struct Label * checkLabel(struct Label * currentLabel, struct Token * startingPoint);

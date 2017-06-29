@@ -31,9 +31,11 @@ bool isEmpty(char c){
     return false;
 }
 
-void lexicalAnalysis(){
-    struct Token * currentToken = new Token;
-    head = currentToken;
+struct Token * lexicalAnalysis(struct Token * currentToken){
+    if (currentToken == NULL){
+        currentToken = new Token;
+        head = currentToken;
+    }
 
     bool appendLexeme = false;
     char c;
@@ -110,4 +112,6 @@ void lexicalAnalysis(){
             }
         }
     }
+
+    return currentToken;
 }
