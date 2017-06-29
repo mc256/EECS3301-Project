@@ -1,4 +1,6 @@
 a = 3;
 b = a + 2;
 print b;
+label something;
+label this;
 print 3 + 2 - 1 * 6;

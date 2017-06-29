@@ -11,3 +11,7 @@
 //<s_ifpos> -> ifpos <expr> goto <id> ; //if <expr> > 0 jumps to the label <id>
 //<statement> -> <s_print> |<s_assign> |<s_label> |<s_goto> |<s_ifpos>
 //<program> -> <statement> { ; <statement> } ;
+
+struct Token * execute(struct Token * startPoint) {
+
+}
