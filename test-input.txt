@@ -4,3 +4,7 @@ print b;
 label something;
 label this;
 print 3 + 2 - 1 * 6;
+labelprint;
+this 
+
+  
