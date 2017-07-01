@@ -1,7 +1,13 @@
-a = 3;
+a = (3+2);
 b = a + 2;
 print b;
 label = 2;
 label something;
 label this;
 print 3 + 2 - 1 * 6;
+print a;
+a = a -1;
+ifpos a goto this;
+print a;
+print (3+2)*6;
+print a;

@@ -5,26 +5,15 @@
 #include <stdbool.h>
 
 
-/*********************************
-    Data Type and Variable
- **********************************/
+/*========================================*/
+/*         Data Type and Variable         */
+/*========================================*/
 #define MAX_LEXEME_LENGTH 100
 
 #define CLASS_OTHERS 0
 #define CLASS_LETTER 1
 #define CLASS_DIGIT 2
 #define CLASS_SYMBOL 3
-
-#define CODE_EQUAL 1
-#define CODE_ADD 2
-#define CODE_MINUS 3
-#define CODE_MULTIPLICATION 4
-#define CODE_SEMICOLON 5
-
-#define CODE_S_PRINT 11
-#define CODE_S_LABEL 12
-#define CODE_S_GOTO 13
-#define CODE_S_IFPOS 14
 
 struct Token{
     int tokenClass;
@@ -55,15 +44,26 @@ struct Token * symbolFactor(struct Token * pointer, long * writeBack);
 struct Token * symbolTerm(struct Token * pointer, long * writeBack);
 struct Token * symbolExpr(struct Token * pointer, long * writeBack);
 
-/*********************************
-    Utility
- **********************************/
 
+/*========================================*/
+/*             Utility                    */
+/*========================================*/
+
+/*
+Print Error Function
+    Print out error message and exit the program.
+    Argument:
+        error - error message
+*/
 void printError(char * error){
     printf("Error:\n\t%s\n", error);
     exit(1);
 }
 
+/*
+Initialize Function
+    Initialize memory for storing labels and variables.
+*/
 void initialize(){
     labelList = malloc(sizeof(struct Label));
     variableList = malloc(sizeof(struct Variable));
@@ -74,9 +74,15 @@ void initialize(){
     variableList->next = NULL;
 }
 
-/*********************************
-    Buffer Operation
- **********************************/
+
+/*========================================*/
+/*        Buffer & Lexical Analysis       */
+/*========================================*/
+
+/*
+Create New Lexeme Function
+    Create memory space for Lexeme
+*/
 char * createNewLexeme(){
     char * temp = malloc(MAX_LEXEME_LENGTH);
     if (temp == NULL){
@@ -85,6 +91,11 @@ char * createNewLexeme(){
     return temp;
 }
 
+
+/*
+Create New Token Function
+    Create memory space for Token. One token structure contains one lexeme
+*/
 struct Token * createNewToken(){
     struct Token * temp = malloc(sizeof(struct Token));
     if (temp == NULL){
@@ -95,6 +106,12 @@ struct Token * createNewToken(){
     return temp;
 }
 
+/*
+Read Source Function
+    Read script from standard input. And store it in buffer (tokenList).
+    Argument:
+        pointer - allows you to continue writing on the buffer.
+*/
 void readSource(struct Token * pointer){
     if (pointer == NULL){
         pointer = createNewToken();
@@ -128,6 +145,7 @@ void readSource(struct Token * pointer){
             pointer->tokenClass = CLASS_SYMBOL;
             pointer->value[pointer->length ++] = c;
             pointer->value[pointer->length] = '\0';
+            appendLexeme = false;
         }else{
             appendLexeme = false;
             continue;
@@ -297,7 +315,7 @@ struct Token * statementPrint(struct Token * pointer){
         return pointer;    
     }
 
-    if (pointer->next == NULL || (pointer->next->tokenClass != CLASS_DIGIT && pointer->next->tokenClass != CLASS_LETTER)) {
+    if (pointer->next == NULL || (pointer->next->tokenClass != CLASS_DIGIT && pointer->next->tokenClass != CLASS_LETTER && !checkLexeme(pointer->next, "("))) {
         return pointer;
     }
 
@@ -487,7 +505,7 @@ int main(){
     initialize();
     readSource(NULL);
     labelParse(tokenList);
-    //testParse();
+    testParse();
     computeParse(tokenList);
 
     return 0;
