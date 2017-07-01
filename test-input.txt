@@ -1,6 +1,7 @@
 a = 3;
+ifpos a goto tag;
 b = a + 2;
 print b;
 label something;
-label this;
+label tag;
 print 3 + 2 - 1 * 6;

@@ -14,6 +14,8 @@ using namespace std;
 //<statement> -> <s_print> |<s_assign> |<s_label> |<s_goto> |<s_ifpos>
 //<program> -> <statement> { ; <statement> } ;
 
+
+
 // Label RDP
 struct Label * checkLabel(struct Label * currentLabel, struct Token * startingPoint) {
     if (currentLabel == NULL){

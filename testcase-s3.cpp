@@ -2,7 +2,6 @@
 
 using namespace std;
 
-
 // Main function
 int main(){
     struct Token * lastToken = lexicalAnalysis(NULL);
@@ -19,7 +18,8 @@ int main(){
     // Check labels
     struct Label * lastLabel = checkLabel(labelList, head);
     struct Label * labelPointer = labelList;
-    // Start Execution
+
+    // Print label string
     while (labelPointer->next != NULL){
         labelPointer = labelPointer->next;
         cout << (* labelPointer->variableName).str() << endl;

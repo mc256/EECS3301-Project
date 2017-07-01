@@ -31,6 +31,14 @@ bool isEmpty(char c){
     return false;
 }
 
+/*
+ * Lexical Analysis Function
+ * Argument:
+ *      currentToken -  is the last token that has been checked.
+ *                      NULL if it is head
+ * Return:
+ *      The last token that has been checked.
+ */
 struct Token * lexicalAnalysis(struct Token * currentToken){
     if (currentToken == NULL){
         currentToken = new Token;
