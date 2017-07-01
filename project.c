@@ -81,7 +81,9 @@ void initialize(){
 
 /*
 Create New Lexeme Function
-    Create memory space for Lexeme
+    Allocate memory space for Lexeme. Maximum size is defined by MAX_LEXEME_LENGTH.
+    Return:
+        pointer to char[].
 */
 char * createNewLexeme(){
     char * temp = malloc(MAX_LEXEME_LENGTH);
@@ -94,7 +96,9 @@ char * createNewLexeme(){
 
 /*
 Create New Token Function
-    Create memory space for Token. One token structure contains one lexeme
+    Allocate memory space for Token. One token structure contains one lexeme.
+    Return:
+        Token structure
 */
 struct Token * createNewToken(){
     struct Token * temp = malloc(sizeof(struct Token));
@@ -109,6 +113,7 @@ struct Token * createNewToken(){
 /*
 Read Source Function
     Read script from standard input. And store it in buffer (tokenList).
+    This is a light compiling process.
     Argument:
         pointer - allows you to continue writing on the buffer.
 */
@@ -154,9 +159,16 @@ void readSource(struct Token * pointer){
 
 }
 
-/*********************************
-    Label
- **********************************/
+/*========================================*/
+/*               Label List               */
+/*========================================*/
+
+/*
+Create New Label Function
+    Allocate memory for label structure.
+    Return:
+        Label structure
+*/
 struct Label * createNewLabel(){
     struct Label * temp = malloc(sizeof(struct Label *));
     if (temp == NULL){
@@ -166,6 +178,14 @@ struct Label * createNewLabel(){
     return temp;
 }
 
+
+/*
+Add Label Function
+    Add label to list. Over write if it exists.
+    Argument:
+        nameToken - token which stores the label name
+        nextToken - token which stores the semicolon for the label statement
+*/
 void addLabel(struct Token * nameToken, struct Token * nextToken){
     //second declaration for the same label name will over write the previous one
     struct Label * p = labelList;
@@ -183,6 +203,14 @@ void addLabel(struct Token * nameToken, struct Token * nextToken){
     p->nextCommand = nextToken;
 }
 
+/*
+Go To Label Function
+    return the pointer to the semicolon of the label statement. Therefore the RDP can execute next command.
+    Argument:
+        name - of the label
+    Return:
+        pointer to the semicolon.
+*/
 struct Token * gotoLabel(char * name){
     struct Label * p = labelList;
     while ((p = p->next) != NULL){
@@ -194,9 +222,17 @@ struct Token * gotoLabel(char * name){
     return NULL;
 }
 
-/*********************************
-    Variable
- **********************************/
+
+/*========================================*/
+/*            Variable List               */
+/*========================================*/
+
+/*
+Create New Variable Function
+    Allocate memory for Variable structure.
+    Return:
+        Variable structure.
+*/
 struct Variable * createNewVariable(){
     struct Variable * temp = malloc(sizeof(struct Variable));
     if (temp == NULL){
@@ -206,6 +242,13 @@ struct Variable * createNewVariable(){
     return temp;
 }
 
+/*
+Set Variable Function
+    Set the value of a variable. If the variable exists, change its value.
+    Argument:
+        name - variable name
+        value - value of the variable
+*/
 void setVariable(char * name, long value){
     struct Variable * p = variableList;
     while (p->next != NULL){
@@ -222,6 +265,14 @@ void setVariable(char * name, long value){
     p->variableValue = value;
 }
 
+/*
+Get Variable Function
+    Get the value of a variable.
+    Argument:
+        name - variable name
+    Return:
+        value of the variable
+*/
 long getVariable(char * name){
     struct Variable * p = variableList;
     while ((p = p->next) != NULL){
@@ -233,22 +284,41 @@ long getVariable(char * name){
     return 0;
 }
 
-/*********************************
-    Lexical Analysis
- **********************************/
+/*========================================*/
+/*            lexicaly Operation          */
+/*========================================*/
+
+/*
+Check Lexeme Function
+    Confirm if the token is what we want.
+    Argument:
+        token - token structure
+        compareTo - lexeme
+    Return:
+        True if same
+*/
 bool checkLexeme(struct Token * token, char * compareTo){
+    if (token == NULL){
+        return false;
+    }
     return strcmp(token->value, compareTo) == 0;
 }
 
+/*
+Get Lexeme Function
+    Return:
+        lexeme itself as string (char[])
+*/
 char * getLexeme(struct Token * token){
     return token->value;
 }
 
 
 
-/*********************************
-    Language Support Functions
- **********************************/
+
+/*========================================*/
+/*        Language Support Functions      */
+/*========================================*/
 
 struct Token * symbolFactor(struct Token * pointer, long * writeBack){
     // <factor> -> id | int_constant | (<expr>)
@@ -258,7 +328,7 @@ struct Token * symbolFactor(struct Token * pointer, long * writeBack){
         pointer = symbolExpr(pointer->next, &cb);
         value = value + cb;
         if (!checkLexeme(pointer, ")")){
-            printError("missing right round bracket");
+            printError("Syntax: Expecting Right Parentheses for '(<expr>).'");
         }
         * writeBack = value;
     }else if (pointer->tokenClass == CLASS_LETTER){
@@ -309,8 +379,8 @@ struct Token * symbolExpr(struct Token * pointer, long * writeBack){
 }
 
 
-
 struct Token * statementPrint(struct Token * pointer){
+    // <s_print> -> print <expr> ;
     if (!checkLexeme(pointer, "print")){
         return pointer;    
     }
@@ -324,12 +394,14 @@ struct Token * statementPrint(struct Token * pointer){
     printf("%ld\n", value);
 
     if (!checkLexeme(pointer, ";")){
-        printError("Missing ';'");
+        printError("Syntax: '<s_print> -> print <expr> ;' Expecting ';'.");
     }
+
     return pointer;    
 }
 
 struct Token * statementGoTo(struct Token * pointer){
+    // <s_goto> -> goto <id> ;
     if (!checkLexeme(pointer, "goto")){
         return pointer;
     }
@@ -338,11 +410,16 @@ struct Token * statementGoTo(struct Token * pointer){
         return pointer;
     }
 
+    if (!checkLexeme(pointer->next->next, ";")){
+        printError("Syntax: '<s_goto> -> goto <id> ;' Expecting ';'.");
+    }
+
     return gotoLabel(pointer->next->value);
 }
 
 
 struct Token * statementIfPositive(struct Token * pointer){
+    // <s_ifpos> -> ifpos <expr> goto <id> ;
     if (!checkLexeme(pointer, "ifpos")){
         return pointer;
     }
@@ -356,11 +433,11 @@ struct Token * statementIfPositive(struct Token * pointer){
     //printf("%ld\n", value);
 
     if (!checkLexeme(pointer, "goto")){
-        printError("missing goto");
+        printError("Syntax: '<s_ifpos> -> ifpos <expr> goto <id> ;' Expecting 'goto'.");
     }
 
     if (pointer->next == NULL || pointer->next->tokenClass != CLASS_LETTER) {
-        printError("missing goto target");
+        printError("Syntax: '<s_ifpos> -> ifpos <expr> goto <id> ;' Expecting '<id>'.");
     }
 
     if (value > 0){
@@ -368,13 +445,14 @@ struct Token * statementIfPositive(struct Token * pointer){
     }
 
     if (!checkLexeme(pointer->next->next, ";")){
-        printError("Missing ';'");
+        printError("Syntax: '<s_ifpos> -> ifpos <expr> goto <id> ;' Expecting ';'.");
     }   
 
     return pointer->next->next;
 }
 
 struct Token * statementAssign(struct Token * pointer){
+    // <s_assign> -> <id> = <expr> ; 
     if (pointer->tokenClass != CLASS_LETTER){
         return pointer;
     }
@@ -392,7 +470,7 @@ struct Token * statementAssign(struct Token * pointer){
     setVariable(name, value);
 
     if (!checkLexeme(pointer, ";")){
-        printError("Missing ';'");
+        printError("Syntax: '<s_assign> -> <id> = <expr> ; ' Expecting ';'.");
     }
 
     return pointer;
@@ -405,10 +483,16 @@ struct Token * statementIgnore(struct Token * pointer){
     return pointer;
 }
 
-/*********************************
-    Parsing
- **********************************/
+/*========================================*/
+/*            Parsing Process             */
+/*========================================*/
 
+/*
+Label Parse Function
+    Find all the labels and save them to the label list.
+    Argument:
+        pointer - the starting point to find
+*/
 void labelParse(struct Token * pointer){
     bool checkLabelToken = true;
     while ((pointer = pointer->next) != NULL){
@@ -416,7 +500,7 @@ void labelParse(struct Token * pointer){
             // Check the next two Tokens
             // <id>;
             if (pointer->next == NULL){
-                printError("Syntax: <s_label> -> label <id> ; Expecting <id>");
+                printError("Syntax: '<s_label> -> label <id> ;' Expecting <id>");
             }
             
             if (pointer->next->tokenClass != CLASS_LETTER){
@@ -425,7 +509,7 @@ void labelParse(struct Token * pointer){
             }
 
             if (pointer->next->next == NULL || !checkLexeme(pointer->next->next, ";")){
-                printError("Syntax: <s_label> -> label <id> ; Expecting ';'");
+                printError("Syntax: '<s_label> -> label <id> ;' Expecting ';'");
             }
 
             addLabel(pointer->next,pointer->next->next);
@@ -439,6 +523,12 @@ void labelParse(struct Token * pointer){
 }
 
 
+/*
+Compute Parse Function
+    Actual do interpretation.
+    Argument:
+        pointer - the starting point
+*/
 void computeParse(struct Token * pointer){
     while ((pointer->next) != NULL){
         pointer = pointer->next;
@@ -465,7 +555,12 @@ void computeParse(struct Token * pointer){
 }
 
 
-//Test Cases
+/*========================================*/
+/*          Built-In TEST CASES           */
+/*========================================*/
+/*REMOVE WHEN SUBMIT*/
+/*REMOVE WHEN SUBMIT*/
+/*REMOVE WHEN SUBMIT*/
 void testParse(){
     struct Token * p = tokenList;
     while ( (p=p->next) != NULL){
@@ -499,13 +594,19 @@ void testParse(){
 
     printf("%ld\n", atol("6478702268"));
 }
+/*REMOVE WHEN SUBMIT*/
+
+
+/*========================================*/
+/*                  MAIN                  */
+/*========================================*/
 
 //Main Function
 int main(){
     initialize();
     readSource(NULL);
     labelParse(tokenList);
-    testParse();
+    //testParse(); /*REMOVE THIS LINE WHEN SUBMIT*/
     computeParse(tokenList);
 
     return 0;
