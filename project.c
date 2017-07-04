@@ -43,6 +43,11 @@ struct Variable * variableList;
 struct Token * symbolFactor(struct Token * pointer, long * writeBack);
 struct Token * symbolTerm(struct Token * pointer, long * writeBack);
 struct Token * symbolExpr(struct Token * pointer, long * writeBack);
+struct Token * symbolBoolExpr(struct Token * pointer, long * writeBack);
+struct Token * symbolStatementPrint(struct Token * pointer);
+struct Token * symbolStatementIfPositive(struct Token * pointer);
+struct Token * symbolStatementAssign(struct Token * pointer);
+struct Token * symbolStatement(struct Token * pointer);
 
 
 /*========================================*/
@@ -322,6 +327,7 @@ char * getLexeme(struct Token * token){
 
 struct Token * symbolFactor(struct Token * pointer, long * writeBack){
     // <factor> -> id | int_constant | (<expr>)
+    // HARD
     long value = 0;
     if (checkLexeme(pointer, "(")){
         long cb = 0;
@@ -342,6 +348,7 @@ struct Token * symbolFactor(struct Token * pointer, long * writeBack){
 
 struct Token * symbolTerm(struct Token * pointer, long * writeBack){
     // <term> -> <factor> { * <factor>}
+    // HARD
     long value = 0;
     pointer = symbolFactor(pointer, &value);
     for (;;){
@@ -359,6 +366,7 @@ struct Token * symbolTerm(struct Token * pointer, long * writeBack){
 
 struct Token * symbolExpr(struct Token * pointer, long * writeBack){
     // <expr> -> <term> { ( + | - ) <term> } 
+    // HARD
     long value = 0;
     pointer = symbolTerm(pointer, &value);
     for (;;){
@@ -378,9 +386,42 @@ struct Token * symbolExpr(struct Token * pointer, long * writeBack){
     return pointer;
 }
 
+struct Token * symbolBoolExpr(struct Token * pointer, long * writeBack){
+    // <boolexpr> -> <expr> (>|<|<=|>=|==) <expr>
+    // HARD
+    long valueLeft = 0;
+    long valueRight = 0;
+    long result = 0;
+    pointer = symbolExpr(pointer, &valueLeft);
+    if (checkLexeme(pointer, ">")){
+        if (checkLexeme(pointer->next, "=")){
+            pointer = symbolExpr(pointer->next->next, &valueRight);
+            result = (valueLeft >= valueRight) ? 1 : 0;
+        }else{
+            pointer = symbolExpr(pointer->next, &valueRight);
+            result = (valueLeft > valueRight) ? 1 : 0;
+        }
+    }else if (checkLexeme(pointer, "<")){
+        if (checkLexeme(pointer->next, "=")){
+            pointer = symbolExpr(pointer->next->next, &valueRight);
+            result = (valueLeft <= valueRight) ? 1 : 0;
+        }else{
+            pointer = symbolExpr(pointer->next, &valueRight);
+            result = (valueLeft < valueRight) ? 1 : 0;
+        }
+    }else if (checkLexeme(pointer, "=") && checkLexeme(pointer->next, "=")){
+            pointer = symbolExpr(pointer->next, &valueRight);
+            result = (valueLeft == valueRight) ? 1 : 0;
+    }else {
+        printError("Syntax: '<boolexpr> -> <expr> (>|<|<=|>=|==) <expr>' Expecting '(>|<|<=|>=|==)'");
+    }
+    *writeBack = result;
+    return pointer;
+}
 
-struct Token * statementPrint(struct Token * pointer){
+struct Token * symbolStatementPrint(struct Token * pointer){
     // <s_print> -> print <expr> ;
+    // SOFT
     if (!checkLexeme(pointer, "print")){
         return pointer;    
     }
@@ -389,19 +430,17 @@ struct Token * statementPrint(struct Token * pointer){
         return pointer;
     }
 
+    // HARD
     long value = 0;
     pointer = symbolExpr(pointer->next, &value);
     printf("%ld\n", value);
 
-    if (!checkLexeme(pointer, ";")){
-        printError("Syntax: '<s_print> -> print <expr> ;' Expecting ';'.");
-    }
-
     return pointer;    
 }
 
-struct Token * statementGoTo(struct Token * pointer){
+struct Token * symbolStatementGoTo(struct Token * pointer){
     // <s_goto> -> goto <id> ;
+    // SOFT
     if (!checkLexeme(pointer, "goto")){
         return pointer;
     }
@@ -410,6 +449,9 @@ struct Token * statementGoTo(struct Token * pointer){
         return pointer;
     }
 
+    // HARD
+    // We need to check the semicolon here rather than in executeProgram() function
+    // Because the reading pointer will jump away after return.
     if (!checkLexeme(pointer->next->next, ";")){
         printError("Syntax: '<s_goto> -> goto <id> ;' Expecting ';'.");
     }
@@ -418,19 +460,22 @@ struct Token * statementGoTo(struct Token * pointer){
 }
 
 
-struct Token * statementIfPositive(struct Token * pointer){
+struct Token * symbolStatementIfPositive(struct Token * pointer){
     // <s_ifpos> -> ifpos <expr> goto <id> ;
+    // SOFT
     if (!checkLexeme(pointer, "ifpos")){
         return pointer;
     }
 
-    if (pointer->next == NULL || (pointer->next->tokenClass != CLASS_DIGIT && pointer->next->tokenClass != CLASS_LETTER)) {
+    // FIRST(<expr>) = {a-zA-Z0-9\(}
+    // 'ifpos' can be a <id>. And it can be assigned value
+    if (pointer->next == NULL || checkLexeme(pointer->next, "=")) {
         return pointer;
     }
 
+    // HARD
     long value = 0;
     pointer = symbolExpr(pointer->next, &value);
-    //printf("%ld\n", value);
 
     if (!checkLexeme(pointer, "goto")){
         printError("Syntax: '<s_ifpos> -> ifpos <expr> goto <id> ;' Expecting 'goto'.");
@@ -440,19 +485,20 @@ struct Token * statementIfPositive(struct Token * pointer){
         printError("Syntax: '<s_ifpos> -> ifpos <expr> goto <id> ;' Expecting '<id>'.");
     }
 
-    if (value > 0){
-        return gotoLabel(pointer->next->value);
-    }
-
+    // We need to check the semicolon here rather than in executeProgram() function
+    // Because the reading pointer will jump away after return.
     if (!checkLexeme(pointer->next->next, ";")){
         printError("Syntax: '<s_ifpos> -> ifpos <expr> goto <id> ;' Expecting ';'.");
     }   
-
+    if (value > 0){
+        return gotoLabel(pointer->next->value);
+    }
     return pointer->next->next;
 }
 
-struct Token * statementAssign(struct Token * pointer){
+struct Token * symbolStatementAssign(struct Token * pointer){
     // <s_assign> -> <id> = <expr> ; 
+    // SOFT
     if (pointer->tokenClass != CLASS_LETTER){
         return pointer;
     }
@@ -463,24 +509,35 @@ struct Token * statementAssign(struct Token * pointer){
         return pointer;
     }
 
-
+    // HARD
     long value = 0;
     pointer = symbolExpr(pointer->next->next, &value);
 
     setVariable(name, value);
 
     if (!checkLexeme(pointer, ";")){
-        printError("Syntax: '<s_assign> -> <id> = <expr> ; ' Expecting ';'.");
+        printError("Syntax: '<s_assign> -> <id> = <expr> ;' Expecting ';'.");
     }
 
     return pointer;
 }
 
-struct Token * statementIgnore(struct Token * pointer){
-    while (pointer != NULL && !checkLexeme(pointer, ";")) {
-        pointer = pointer->next;
-    }
-    return pointer;
+struct Token * symbolStatement(struct Token * pointer){
+        struct Token * onHold = pointer;
+        if ((pointer = symbolStatementPrint(pointer)) != onHold){
+            return pointer;
+        }
+        if ((pointer = symbolStatementGoTo(pointer)) != onHold){
+            return pointer;
+        }
+        if ((pointer = symbolStatementIfPositive(pointer)) != onHold){
+            return pointer;
+        }
+        if ((pointer = symbolStatementAssign(pointer)) != onHold){
+            return pointer;
+        }
+        // HARD
+        return pointer;
 }
 
 /*========================================*/
@@ -529,27 +586,14 @@ Compute Parse Function
     Argument:
         pointer - the starting point
 */
-void computeParse(struct Token * pointer){
+void executeProgram(struct Token * pointer){
+    // <program> -> <statement> { ; <statement> } ;
     while ((pointer->next) != NULL){
-        pointer = pointer->next;
-        struct Token * cp = pointer;
-        if ((pointer = statementPrint(pointer)) != cp){
-            continue;
-        }
-        if ((pointer = statementGoTo(pointer)) != cp){
-            continue;
-        }
-        if ((pointer = statementIfPositive(pointer)) != cp){
-            continue;
-        }
-        if ((pointer = statementAssign(pointer)) != cp){
-            continue;
-        }
-        if ((pointer = statementIgnore(pointer)) != cp){
-            continue;
-        }
+        pointer = symbolStatement(pointer->next);
         if (pointer == NULL){
             break;
+        }else if (!checkLexeme(pointer, ";")){
+            printError("Syntax: Missing ';'.");
         }
     }
 }
@@ -591,8 +635,6 @@ void testParse(){
     printf("-->%ld\n", number);
     number = getVariable("33123");
     printf("-->%ld\n", number);
-
-    printf("%ld\n", atol("6478702268"));
 }
 /*REMOVE WHEN SUBMIT*/
 
@@ -607,7 +649,7 @@ int main(){
     readSource(NULL);
     labelParse(tokenList);
     //testParse(); /*REMOVE THIS LINE WHEN SUBMIT*/
-    computeParse(tokenList);
+    executeProgram(tokenList);
 
     return 0;
 }
