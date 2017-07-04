@@ -43,7 +43,6 @@ struct Variable * variableList;
 struct Token * symbolFactor(struct Token * pointer, long * writeBack);
 struct Token * symbolTerm(struct Token * pointer, long * writeBack);
 struct Token * symbolExpr(struct Token * pointer, long * writeBack);
-struct Token * symbolBoolExpr(struct Token * pointer, long * writeBack);
 struct Token * symbolStatementPrint(struct Token * pointer);
 struct Token * symbolStatementIfPositive(struct Token * pointer);
 struct Token * symbolStatementAssign(struct Token * pointer);
@@ -383,39 +382,6 @@ struct Token * symbolExpr(struct Token * pointer, long * writeBack){
         }
     }
     *writeBack = value;
-    return pointer;
-}
-
-struct Token * symbolBoolExpr(struct Token * pointer, long * writeBack){
-    // <boolexpr> -> <expr> (>|<|<=|>=|==) <expr>
-    // HARD
-    long valueLeft = 0;
-    long valueRight = 0;
-    long result = 0;
-    pointer = symbolExpr(pointer, &valueLeft);
-    if (checkLexeme(pointer, ">")){
-        if (checkLexeme(pointer->next, "=")){
-            pointer = symbolExpr(pointer->next->next, &valueRight);
-            result = (valueLeft >= valueRight) ? 1 : 0;
-        }else{
-            pointer = symbolExpr(pointer->next, &valueRight);
-            result = (valueLeft > valueRight) ? 1 : 0;
-        }
-    }else if (checkLexeme(pointer, "<")){
-        if (checkLexeme(pointer->next, "=")){
-            pointer = symbolExpr(pointer->next->next, &valueRight);
-            result = (valueLeft <= valueRight) ? 1 : 0;
-        }else{
-            pointer = symbolExpr(pointer->next, &valueRight);
-            result = (valueLeft < valueRight) ? 1 : 0;
-        }
-    }else if (checkLexeme(pointer, "=") && checkLexeme(pointer->next, "=")){
-            pointer = symbolExpr(pointer->next, &valueRight);
-            result = (valueLeft == valueRight) ? 1 : 0;
-    }else {
-        printError("Syntax: '<boolexpr> -> <expr> (>|<|<=|>=|==) <expr>' Expecting '(>|<|<=|>=|==)'");
-    }
-    *writeBack = result;
     return pointer;
 }
 
