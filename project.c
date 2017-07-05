@@ -540,7 +540,7 @@ Label Parse Function
 void labelParse(struct Token * pointer){
     bool checkLabelToken = true;
     while ((pointer = pointer->next) != NULL){
-        if (checkLexeme(pointer, "label")){
+        if (checkLexeme(pointer, "label") && checkLabelToken){
             // Check the next two Tokens
             // <id> [;]
             if (pointer->next == NULL){
@@ -587,46 +587,6 @@ void executeProgram(struct Token * pointer){
 
 
 /*========================================*/
-/*          Built-In TEST CASES           */
-/*========================================*/
-/*REMOVE WHEN SUBMIT*/
-/*REMOVE WHEN SUBMIT*/
-/*REMOVE WHEN SUBMIT*/
-void testParse(){
-    struct Token * p = tokenList;
-    while ( (p=p->next) != NULL){
-        printf("%s<------[%ld]\n", getLexeme(p), p->length);
-        if (checkLexeme(p, "print")){
-            printf("this is print\n");
-        }
-    }
-    
-    struct Label * q = labelList;
-    while ( (q = q->next) != NULL ){
-        printf("%s\n", q->labelName->value);
-    }
-    gotoLabel("this");
-
-
-    setVariable("33123aa", 123);
-    setVariable("33123", 555);
-    setVariable("33123", 56566);
-
-    struct Variable * r = variableList;
-    while ( (r = r->next) != NULL ){
-        printf("%s=%ld\n", r->variableName, r->variableValue);
-    }
-
-    long number;
-    number = getVariable("33123aa");
-    printf("-->%ld\n", number);
-    number = getVariable("33123");
-    printf("-->%ld\n", number);
-}
-/*REMOVE WHEN SUBMIT*/
-
-
-/*========================================*/
 /*                  MAIN                  */
 /*========================================*/
 
@@ -635,7 +595,6 @@ int main(){
     initialize();
     readSource(NULL);
     labelParse(tokenList);
-    //testParse(); /*REMOVE THIS LINE WHEN SUBMIT*/
     executeProgram(tokenList);
 
     return 0;
