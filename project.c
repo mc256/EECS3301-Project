@@ -63,7 +63,7 @@ Print Error Function
 void printError(char * error, char * symbol, char * tokenValue){
     printf("Error:\n");
     if (symbol != NULL){
-        printf("\tIn %s token \"%s\".\n",symbol, tokenValue == NULL ? "NULL" : tokenValue);
+        printf("\tIn %s lexeme \"%s\".\n",symbol, tokenValue == NULL ? "NULL" : tokenValue);
     }
     printf("\t%s\n", error);
     exit(1);
