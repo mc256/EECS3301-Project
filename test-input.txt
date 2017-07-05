@@ -14,3 +14,7 @@ print a;
 print label;
 print 3 * (2 - 8*5 +6);
 print 3;
+label test;
+print 1 + 1;
+goto lll;
+label test2

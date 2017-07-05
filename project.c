@@ -46,6 +46,7 @@ struct Token * symbolExpr(struct Token * pointer, long * writeBack);
 struct Token * symbolStatementPrint(struct Token * pointer);
 struct Token * symbolStatementIfPositive(struct Token * pointer);
 struct Token * symbolStatementAssign(struct Token * pointer);
+struct Token * symbolStatementLabel(struct Token * pointer);
 struct Token * symbolStatement(struct Token * pointer);
 
 
@@ -59,8 +60,12 @@ Print Error Function
     Argument:
         error - error message
 */
-void printError(char * error){
-    printf("Error:\n\t%s\n", error);
+void printError(char * error, char * symbol, char * tokenValue){
+    printf("Error:\n");
+    if (symbol != NULL){
+        printf("\tIn %s token \"%s\".\n",symbol, tokenValue == NULL ? "NULL" : tokenValue);
+    }
+    printf("\t%s\n", error);
     exit(1);
 }
 
@@ -72,7 +77,7 @@ void initialize(){
     labelList = malloc(sizeof(struct Label));
     variableList = malloc(sizeof(struct Variable));
     if (labelList == NULL || variableList == NULL){
-        printError("Not Enough Memory");
+        printError("Not Enough Memory", NULL, NULL);
     }
     labelList->next = NULL;
     variableList->next = NULL;
@@ -92,7 +97,7 @@ Create New Lexeme Function
 char * createNewLexeme(){
     char * temp = malloc(MAX_LEXEME_LENGTH);
     if (temp == NULL){
-        printError("Not Enough Memory");
+        printError("Not Enough Memory", NULL, NULL);
     }
     return temp;
 }
@@ -107,7 +112,7 @@ Create New Token Function
 struct Token * createNewToken(){
     struct Token * temp = malloc(sizeof(struct Token));
     if (temp == NULL){
-        printError("Not Enough Memory");
+        printError("Not Enough Memory", NULL, NULL);
     }
     temp->length = 0;
     temp->value = createNewLexeme();
@@ -176,7 +181,7 @@ Create New Label Function
 struct Label * createNewLabel(){
     struct Label * temp = malloc(sizeof(struct Label *));
     if (temp == NULL){
-        printError("Not Enough Memory");
+        printError("Not Enough Memory", NULL, NULL);
     }
     temp->next = NULL;
     return temp;
@@ -222,7 +227,7 @@ struct Token * gotoLabel(char * name){
             return p->nextCommand;
         }
     }
-    printError("Lable Not Found");
+    printError("Runtime: Lable Not Found",  "label name searching process, for", name);
     return NULL;
 }
 
@@ -240,7 +245,7 @@ Create New Variable Function
 struct Variable * createNewVariable(){
     struct Variable * temp = malloc(sizeof(struct Variable));
     if (temp == NULL){
-        printError("Not Enough Memory");
+        printError("Runtime: Not Enough Memory", NULL, NULL);
     }
     temp->next = NULL;
     return temp;
@@ -284,7 +289,7 @@ long getVariable(char * name){
             return p->variableValue;
         }
     }
-    printError("Variable Not Defined");
+    printError("Variable Not Defined", "variable searching process, for", name);
     return 0;
 }
 
@@ -333,13 +338,15 @@ struct Token * symbolFactor(struct Token * pointer, long * writeBack){
         pointer = symbolExpr(pointer->next, &cb);
         value = value + cb;
         if (!checkLexeme(pointer, ")")){
-            printError("Syntax: Expecting Right Parentheses for '(<expr>).'");
+            printError("Syntax: Expecting Right Parentheses for '(<expr>).'", "<factor>", pointer->value);
         }
         * writeBack = value;
     }else if (pointer->tokenClass == CLASS_LETTER){
         value = getVariable(pointer->value);
     }else if (pointer->tokenClass == CLASS_DIGIT) {
         value = atol(pointer->value);
+    }else{
+            printError("Syntax: CANNOT Find a valid 'id | int_constant | (<expr>)'", "<factor>", pointer->value);
     }
     *writeBack = value;
     return pointer->next;
@@ -386,7 +393,7 @@ struct Token * symbolExpr(struct Token * pointer, long * writeBack){
 }
 
 struct Token * symbolStatementPrint(struct Token * pointer){
-    // <s_print> -> print <expr> ;
+    // <s_print> -> print <expr>
     // SOFT
     if (!checkLexeme(pointer, "print")){
         return pointer;    
@@ -405,7 +412,7 @@ struct Token * symbolStatementPrint(struct Token * pointer){
 }
 
 struct Token * symbolStatementGoTo(struct Token * pointer){
-    // <s_goto> -> goto <id> ;
+    // <s_goto> -> goto <id>
     // SOFT
     if (!checkLexeme(pointer, "goto")){
         return pointer;
@@ -418,8 +425,8 @@ struct Token * symbolStatementGoTo(struct Token * pointer){
     // HARD
     // We need to check the semicolon here rather than in executeProgram() function
     // Because the reading pointer will jump away after return.
-    if (!checkLexeme(pointer->next->next, ";")){
-        printError("Syntax: '<s_goto> -> goto <id> ;' Expecting ';'.");
+    if (pointer->next->next != NULL && !checkLexeme(pointer->next->next, ";")){
+        printError("Syntax: '<s_goto> -> goto <id> ;' Expecting ';'.", "<s_goto>", pointer->value);
     }
 
     return gotoLabel(pointer->next->value);
@@ -427,7 +434,7 @@ struct Token * symbolStatementGoTo(struct Token * pointer){
 
 
 struct Token * symbolStatementIfPositive(struct Token * pointer){
-    // <s_ifpos> -> ifpos <expr> goto <id> ;
+    // <s_ifpos> -> ifpos <expr> goto <id>
     // SOFT
     if (!checkLexeme(pointer, "ifpos")){
         return pointer;
@@ -444,17 +451,17 @@ struct Token * symbolStatementIfPositive(struct Token * pointer){
     pointer = symbolExpr(pointer->next, &value);
 
     if (!checkLexeme(pointer, "goto")){
-        printError("Syntax: '<s_ifpos> -> ifpos <expr> goto <id> ;' Expecting 'goto'.");
+        printError("Syntax: '<s_ifpos> -> ifpos <expr> goto <id> ;' Expecting 'goto'.", "<s_goto>", pointer->value);
     }
 
     if (pointer->next == NULL || pointer->next->tokenClass != CLASS_LETTER) {
-        printError("Syntax: '<s_ifpos> -> ifpos <expr> goto <id> ;' Expecting '<id>'.");
+        printError("Syntax: '<s_ifpos> -> ifpos <expr> goto <id> ;' Expecting '<id>'.", "<s_goto>", pointer->value);
     }
 
     // We need to check the semicolon here rather than in executeProgram() function
     // Because the reading pointer will jump away after return.
-    if (!checkLexeme(pointer->next->next, ";")){
-        printError("Syntax: '<s_ifpos> -> ifpos <expr> goto <id> ;' Expecting ';'.");
+    if (pointer->next->next != NULL && !checkLexeme(pointer->next->next, ";")){
+        printError("Syntax: '<s_ifpos> -> ifpos <expr> goto <id> ;' Expecting ';'.", "<s_goto>", pointer->value);
     }   
     if (value > 0){
         return gotoLabel(pointer->next->value);
@@ -463,7 +470,7 @@ struct Token * symbolStatementIfPositive(struct Token * pointer){
 }
 
 struct Token * symbolStatementAssign(struct Token * pointer){
-    // <s_assign> -> <id> = <expr> ; 
+    // <s_assign> -> <id> = <expr>
     // SOFT
     if (pointer->tokenClass != CLASS_LETTER){
         return pointer;
@@ -481,11 +488,21 @@ struct Token * symbolStatementAssign(struct Token * pointer){
 
     setVariable(name, value);
 
-    if (!checkLexeme(pointer, ";")){
-        printError("Syntax: '<s_assign> -> <id> = <expr> ;' Expecting ';'.");
+    return pointer;
+}
+
+struct Token * symbolStatementLabel(struct Token * pointer){
+    // label <id>
+    // SOFT
+    if (!checkLexeme(pointer, "label")){
+        return pointer;
+    }
+    if (pointer->next == NULL || pointer->next->tokenClass != CLASS_LETTER){
+        return pointer;
     }
 
-    return pointer;
+    // HARD
+    return pointer->next->next;
 }
 
 struct Token * symbolStatement(struct Token * pointer){
@@ -502,7 +519,11 @@ struct Token * symbolStatement(struct Token * pointer){
         if ((pointer = symbolStatementAssign(pointer)) != onHold){
             return pointer;
         }
+        if ((pointer = symbolStatementLabel(pointer)) != onHold){
+            return pointer;
+        }
         // HARD
+        
         return pointer;
 }
 
@@ -521,9 +542,9 @@ void labelParse(struct Token * pointer){
     while ((pointer = pointer->next) != NULL){
         if (checkLexeme(pointer, "label")){
             // Check the next two Tokens
-            // <id>;
+            // <id> [;]
             if (pointer->next == NULL){
-                printError("Syntax: '<s_label> -> label <id> ;' Expecting <id>");
+                printError("Syntax: '<s_label> -> label <id> ;' Expecting <id>", "<s_label>", pointer->next->value);
             }
             
             if (pointer->next->tokenClass != CLASS_LETTER){
@@ -531,8 +552,8 @@ void labelParse(struct Token * pointer){
                 continue;
             }
 
-            if (pointer->next->next == NULL || !checkLexeme(pointer->next->next, ";")){
-                printError("Syntax: '<s_label> -> label <id> ;' Expecting ';'");
+            if (pointer->next->next != NULL && !checkLexeme(pointer->next->next, ";")){
+                printError("Syntax: '<s_label> -> label <id> ;' Expecting ';'", "<s_label>", pointer->next->next->value);
             }
 
             addLabel(pointer->next,pointer->next->next);
@@ -553,13 +574,13 @@ Compute Parse Function
         pointer - the starting point
 */
 void executeProgram(struct Token * pointer){
-    // <program> -> <statement> { ; <statement> } ;
+    // <program> -> <statement> { ; <statement> } [;]
     while ((pointer->next) != NULL){
         pointer = symbolStatement(pointer->next);
         if (pointer == NULL){
             break;
         }else if (!checkLexeme(pointer, ";")){
-            printError("Syntax: Missing ';'.");
+            printError("Syntax: Statement CANNOT Be Resolved.", "<s_label>", pointer->value);
         }
     }
 }
