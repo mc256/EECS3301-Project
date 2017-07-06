@@ -363,7 +363,7 @@ There is a double semicolon issue in Prof's PDF. We are following these EBNF
 In some situtation, there are too many options can be choosen. In each recursive-descent function, there are two parts.
 1.  "SOFT" means the RDP has NOT YET confirmed the statement is the function's statements.
     If it cannot regonize the statement, it will return the pointer back to upper level without moving the pointer.
-2.  "HART" means the RDP has confirmed that the statement is the function's statement. It cannot be other options.
+2.  "HARD" means the RDP has confirmed that the statement is the function's statement. It cannot be other options.
     If it cannot regonize the statement, it will produce a syntax error.
 
 
