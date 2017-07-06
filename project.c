@@ -14,9 +14,9 @@ Tong Wu         malan52.82@gmail.com
 #include <stdbool.h>
 
 
-/*========================================*/
-/*         Data Type and Variable         */
-/*========================================*/
+/*====================================================*/
+/*         Data Type and Variable Declaration         */
+/*====================================================*/
 #define MAX_LEXEME_LENGTH 100
 
 #define CLASS_OTHERS 0
@@ -132,7 +132,7 @@ struct Token * createNewToken(){
 /*
 Read Source Function
     Read script from standard input. And store it in buffer (tokenList).
-    This is a light compiling process.
+    This is like a light compiling process.
     Argument:
         pointer - allows you to continue writing on the buffer.
 */
@@ -184,7 +184,7 @@ void readSource(struct Token * pointer){
 
 /*
 Create New Label Function
-    Allocate memory for label structure.
+    Allocates memory for label structure.
     Return:
         Label structure
 */
@@ -339,7 +339,7 @@ char * getLexeme(struct Token * token){
 /*  Recursive-Descent Parsing Functions   */
 /*========================================*/
 /*
-There is a double semicolon issue in Prof's PDF. We are following these EBNF
+There is a double semicolon issue in Prof's PDF. So after discussing with Prof we are following these EBNF
 
 <letter> -> A | B | … | Z | a | b | … | z 
 <digit> -> 0 | 1 | 2 | 3 | 4 | 5| 6 | 7 | 8 | 9
@@ -576,7 +576,7 @@ struct Token * symbolStatement(struct Token * pointer){
 
 /*
 Label Parse Function
-    Find all the labels and save them to the label list.
+    Find all the labels and save them in the label list.
     Argument:
         pointer - the starting point to find
 */
@@ -612,7 +612,7 @@ void labelParse(struct Token * pointer){
 
 /*
 Compute Parse Function
-    Actual do interpretation.
+    Actually, it does the interpretation.
     Argument:
         pointer - the starting point
 */
