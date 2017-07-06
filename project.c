@@ -591,7 +591,7 @@ struct Lexeme * symbolStatement(struct Lexeme * pointer){
     if ((pointer = symbolStatementLabel(pointer)) != onHold){
         return pointer;
     }
-    if ((pointer = symbolComment(pointer)) != onHold){
+    if ((pointer = symbolStatementComment(pointer)) != onHold){
         return pointer;
     }
     // HARD

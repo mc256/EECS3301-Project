@@ -57,6 +57,7 @@ struct Lexeme * symbolStatementPrint(struct Lexeme * pointer);
 struct Lexeme * symbolStatementIfPositive(struct Lexeme * pointer);
 struct Lexeme * symbolStatementAssign(struct Lexeme * pointer);
 struct Lexeme * symbolStatementLabel(struct Lexeme * pointer);
+struct Lexeme * symbolStatementComment(struct Lexeme * pointer);
 struct Lexeme * symbolStatement(struct Lexeme * pointer);
 
 
@@ -552,7 +553,7 @@ struct Lexeme * symbolStatementLabel(struct Lexeme * pointer){
     return pointer->next->next;
 }
 
-struct Lexeme * symbolComment(struct Lexeme * pointer){
+struct Lexeme * symbolStatementComment(struct Lexeme * pointer){
     // <s_comment> -> COMMENT: <anything except semicolon>
     // SOFT
     if (!checkLexeme(pointer, "COMMENT")){
@@ -590,7 +591,7 @@ struct Lexeme * symbolStatement(struct Lexeme * pointer){
     if ((pointer = symbolStatementLabel(pointer)) != onHold){
         return pointer;
     }
-    if ((pointer = symbolComment(pointer)) != onHold){
+    if ((pointer = symbolStatementComment(pointer)) != onHold){
         return pointer;
     }
     // HARD
