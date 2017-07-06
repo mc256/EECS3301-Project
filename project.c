@@ -368,8 +368,8 @@ In some situation, there are too many options that can be chosen. In each recurs
 2.  "HARD" means the RDP has confirmed that the statement exists in the functions' statement.It cannot be anything other than this option.
     If it didn't recognize the statement, it will produce a syntax error.
 
-Although the professor said we can have all the keywords reserved, so therefore in this implementation,
-all the keywords can be <id>. That means you may have a variable named using any keywords.
+Although the professor said we can have all the keywords reserved, however in this implementation,
+all the keywords can be <id>. That means you can have a variable name same as any keyword.
 */
 
 struct Lexeme * symbolFactor(struct Lexeme * pointer, long * writeBack){
