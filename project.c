@@ -1,3 +1,12 @@
+/*
+==================================================
+EECS3301 Project 1 Version A
+
+Jun Lin Chen    chen256@my.yorku.ca
+Vishal Malik    vishal27@my.yorku.ca
+Tong Wu         malan52.82@gmail.com
+==================================================
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -40,6 +49,7 @@ struct Variable {
 
 struct Variable * variableList;
 
+// RDP functions
 struct Token * symbolFactor(struct Token * pointer, long * writeBack);
 struct Token * symbolTerm(struct Token * pointer, long * writeBack);
 struct Token * symbolExpr(struct Token * pointer, long * writeBack);
@@ -56,7 +66,7 @@ struct Token * symbolStatement(struct Token * pointer);
 
 /*
 Print Error Function
-    Print out error message and exit the program.
+    Print out error message (including syntax error messages) and exit the program.
     Argument:
         error - error message
 */
@@ -92,7 +102,7 @@ void initialize(){
 Create New Lexeme Function
     Allocate memory space for Lexeme. Maximum size is defined by MAX_LEXEME_LENGTH.
     Return:
-        pointer to char[].
+        pointer to char[]. the string of lexeme
 */
 char * createNewLexeme(){
     char * temp = malloc(MAX_LEXEME_LENGTH);
@@ -105,9 +115,9 @@ char * createNewLexeme(){
 
 /*
 Create New Token Function
-    Allocate memory space for Token. One token structure contains one lexeme.
+    Allocate memory space for Token. One token structure contains one lexeme and its character class.
     Return:
-        Token structure
+        pointer to a empty and new token structure
 */
 struct Token * createNewToken(){
     struct Token * temp = malloc(sizeof(struct Token));
@@ -326,8 +336,40 @@ char * getLexeme(struct Token * token){
 
 
 /*========================================*/
-/*        Language Support Functions      */
+/*  Recursive-Descent Parsing Functions   */
 /*========================================*/
+/*
+There is a double semicolon issue in Prof's PDF. We are following these EBNF
+
+<letter> -> A | B | … | Z | a | b | … | z 
+<digit> -> 0 | 1 | 2 | 3 | 4 | 5| 6 | 7 | 8 | 9
+<int_constant> -> <digit> { <digit> }
+<id> -> <letter> { <letter> | <digit> }
+
+<factor> -> id | int_constant | (<expr>)
+<term> -> <factor> { * <factor>}
+<expr> -> <term> { ( + | - ) <term> } 
+
+<s_print> -> print <expr>
+<s_goto> -> goto <id>
+<s_ifpos> -> ifpos <expr> goto <id>
+<s_assign> -> <id> = <expr>
+<s_label> -> label <id>
+
+<statement> -> <s_print> |<s_assign> |<s_label> |<s_goto> |<s_ifpos>
+<program> -> <statement> { {;} <statement> } [;]
+
+
+In some situtation, there are too many options can be choosen. In each recursive-descent function, there are two parts.
+1.  "SOFT" means the RDP has NOT YET confirmed the statement is the function's statements.
+    If it cannot regonize the statement, it will return the pointer back to upper level without moving the pointer.
+2.  "HART" means the RDP has confirmed that the statement is the function's statement. It cannot be other options.
+    If it cannot regonize the statement, it will produce a syntax error.
+
+
+Although the professor said we can have all the keywords reserved, 
+in this implementation, all the keywords can be <id>. That means you may have variable named using any keywords.
+*/
 
 struct Token * symbolFactor(struct Token * pointer, long * writeBack){
     // <factor> -> id | int_constant | (<expr>)
@@ -441,7 +483,6 @@ struct Token * symbolStatementIfPositive(struct Token * pointer){
     }
 
     // FIRST(<expr>) = {a-zA-Z0-9\(}
-    // 'ifpos' can be a <id>. And it can be assigned value
     if (pointer->next == NULL || checkLexeme(pointer->next, "=")) {
         return pointer;
     }
@@ -492,7 +533,8 @@ struct Token * symbolStatementAssign(struct Token * pointer){
 }
 
 struct Token * symbolStatementLabel(struct Token * pointer){
-    // label <id>
+    // <s_label> -> label <id>
+    // We don't do anything here. Because label parsing is in a separate function.
     // SOFT
     if (!checkLexeme(pointer, "label")){
         return pointer;
@@ -596,6 +638,5 @@ int main(){
     readSource(NULL);
     labelParse(tokenList);
     executeProgram(tokenList);
-
     return 0;
 }
