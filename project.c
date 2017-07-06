@@ -99,12 +99,13 @@ void initialize(){
 /*========================================*/
 
 /*
-Create New Lexeme Function
-    Allocate memory space for Lexeme. Maximum size is defined by MAX_LEXEME_LENGTH.
+Create New Lexeme String Function
+    Allocate memory space for Lexeme. The lexeme will be stored as a string (char[]).
+    Maximum size is defined by MAX_LEXEME_LENGTH.
     Return:
         pointer to char[]. the string of lexeme
 */
-char * createNewLexeme(){
+char * createNewLexemeString(){
     char * temp = malloc(MAX_LEXEME_LENGTH);
     if (temp == NULL){
         printError("Not Enough Memory", NULL, NULL);
@@ -114,18 +115,18 @@ char * createNewLexeme(){
 
 
 /*
-Create New Token Function
-    Allocate memory space for Token. One token structure contains one lexeme and its character class.
+Create New Lexeme Structure Function
+    Allocate memory space for lexeme structure. One lexeme structure contains one lexeme and its character class.
     Return:
         pointer to a empty and new token structure
 */
-struct Lexeme * createNewToken(){
+struct Lexeme * createNewLexeme(){
     struct Lexeme * temp = malloc(sizeof(struct Lexeme));
     if (temp == NULL){
         printError("Not Enough Memory", NULL, NULL);
     }
     temp->length = 0;
-    temp->value = createNewLexeme();
+    temp->value = createNewLexemeString();
     return temp;
 }
 
@@ -138,7 +139,7 @@ Read Source Function
 */
 void readSource(struct Lexeme * pointer){
     if (pointer == NULL){
-        pointer = createNewToken();
+        pointer = createNewLexeme();
         tokenList = pointer;
     }
 
@@ -147,7 +148,7 @@ void readSource(struct Lexeme * pointer){
     while ((c = getchar()) != EOF){
         if (isdigit(c)) {
             if (!appendLexeme){
-                pointer->next = createNewToken();
+                pointer->next = createNewLexeme();
                 pointer = pointer->next;
                 pointer->tokenClass = CLASS_DIGIT;
                 appendLexeme = true;
@@ -156,7 +157,7 @@ void readSource(struct Lexeme * pointer){
             pointer->value[pointer->length] = '\0';
         }else if (isalpha(c)) {
             if (!appendLexeme){
-                pointer->next = createNewToken();
+                pointer->next = createNewLexeme();
                 pointer = pointer->next;
                 pointer->tokenClass = CLASS_LETTER;
                 appendLexeme = true;
@@ -164,7 +165,7 @@ void readSource(struct Lexeme * pointer){
             pointer->value[pointer->length ++] = c;
             pointer->value[pointer->length] = '\0';
         }else if (ispunct(c)){
-            pointer->next = createNewToken();
+            pointer->next = createNewLexeme();
             pointer = pointer->next;
             pointer->tokenClass = CLASS_SYMBOL;
             pointer->value[pointer->length ++] = c;
@@ -317,7 +318,7 @@ Check Lexeme Function
         True if same
 */
 bool checkLexeme(struct Lexeme * token, char * compareTo){
-    if (token == NULL){
+    if (token == NULL || token->value == NULL || compareTo == NULL){
         return false;
     }
     return strcmp(token->value, compareTo) == 0;
@@ -359,6 +360,9 @@ There is a double semicolon issue in Prof's PDF. So after discussing with Prof w
 <statement> -> <s_print> |<s_assign> |<s_label> |<s_goto> |<s_ifpos>
 <program> -> <statement> { {;} <statement> } [;]
 
+We also add a comment feature.
+<s_comment> -> COMMENT: <anything except semicolon>
+<statement> -> <s_print> |<s_assign> |<s_label> |<s_goto> |<s_ifpos> |<s_comment>
 
 In some situation, there are too many options that can be chosen. In each recursive-descent function, there are two parts.
 
@@ -548,26 +552,50 @@ struct Lexeme * symbolStatementLabel(struct Lexeme * pointer){
     return pointer->next->next;
 }
 
-struct Lexeme * symbolStatement(struct Lexeme * pointer){
-        struct Lexeme * onHold = pointer;
-        if ((pointer = symbolStatementPrint(pointer)) != onHold){
-            return pointer;
-        }
-        if ((pointer = symbolStatementGoTo(pointer)) != onHold){
-            return pointer;
-        }
-        if ((pointer = symbolStatementIfPositive(pointer)) != onHold){
-            return pointer;
-        }
-        if ((pointer = symbolStatementAssign(pointer)) != onHold){
-            return pointer;
-        }
-        if ((pointer = symbolStatementLabel(pointer)) != onHold){
-            return pointer;
-        }
-        // HARD
-        
+struct Lexeme * symbolComment(struct Lexeme * pointer){
+    // <s_comment> -> COMMENT: <anything except semicolon>
+    // SOFT
+    if (!checkLexeme(pointer, "COMMENT")){
         return pointer;
+    }
+    if (pointer->next == NULL || !checkLexeme(pointer->next, ":")){
+        return pointer;
+    }
+
+    // HARD
+    while ((pointer = pointer->next) != NULL){
+        if (checkLexeme(pointer, ";")){
+            return pointer;
+        }
+    }
+    return pointer;
+}
+
+struct Lexeme * symbolStatement(struct Lexeme * pointer){
+    // <statement> -> <s_print> |<s_assign> |<s_label> |<s_goto> |<s_ifpos> |<s_comment>
+    
+    struct Lexeme * onHold = pointer;
+    if ((pointer = symbolStatementPrint(pointer)) != onHold){
+        return pointer;
+    }
+    if ((pointer = symbolStatementGoTo(pointer)) != onHold){
+        return pointer;
+    }
+    if ((pointer = symbolStatementIfPositive(pointer)) != onHold){
+        return pointer;
+    }
+    if ((pointer = symbolStatementAssign(pointer)) != onHold){
+        return pointer;
+    }
+    if ((pointer = symbolStatementLabel(pointer)) != onHold){
+        return pointer;
+    }
+    if ((pointer = symbolComment(pointer)) != onHold){
+        return pointer;
+    }
+    // HARD
+    
+    return pointer;
 }
 
 /*========================================*/

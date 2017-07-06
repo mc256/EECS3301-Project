@@ -1,3 +1,12 @@
+COMMENT: EECS 3301 Project 1 Version A;
+COMMENT:;
+COMMENT:    Jun Lin Chen    chen256@my.yorku.ca;
+COMMENT:    Vishal Malik    vishal27@my.yorku.ca;
+COMMENT:    Tong Wu         malan52.82@gmail.com;
+COMMENT:;
+COMMENT: This is a public test file shared by all group member.;
+
+
 a = (3+2);
 b = a + 2;
 print b;
@@ -17,4 +26,4 @@ print 3 * (2 - 8*5 +6);
 print 3;
 label test;;;;
 print 1 + 1;
-label test2;
+label test2
