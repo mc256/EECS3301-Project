@@ -24,18 +24,18 @@ Tong Wu         malan52.82@gmail.com
 #define CLASS_DIGIT 2
 #define CLASS_SYMBOL 3
 
-struct Token{
+struct Lexeme{
     int tokenClass;
     char * value;
     size_t length;
-    struct Token * next;
+    struct Lexeme * next;
 };
 
-struct Token * tokenList;
+struct Lexeme * tokenList;
 
 struct Label {
-    struct Token * labelName;
-    struct Token * nextCommand;
+    struct Lexeme * labelName;
+    struct Lexeme * nextCommand;
     struct Label * next;
 };
 
@@ -50,14 +50,14 @@ struct Variable {
 struct Variable * variableList;
 
 // RDP functions
-struct Token * symbolFactor(struct Token * pointer, long * writeBack);
-struct Token * symbolTerm(struct Token * pointer, long * writeBack);
-struct Token * symbolExpr(struct Token * pointer, long * writeBack);
-struct Token * symbolStatementPrint(struct Token * pointer);
-struct Token * symbolStatementIfPositive(struct Token * pointer);
-struct Token * symbolStatementAssign(struct Token * pointer);
-struct Token * symbolStatementLabel(struct Token * pointer);
-struct Token * symbolStatement(struct Token * pointer);
+struct Lexeme * symbolFactor(struct Lexeme * pointer, long * writeBack);
+struct Lexeme * symbolTerm(struct Lexeme * pointer, long * writeBack);
+struct Lexeme * symbolExpr(struct Lexeme * pointer, long * writeBack);
+struct Lexeme * symbolStatementPrint(struct Lexeme * pointer);
+struct Lexeme * symbolStatementIfPositive(struct Lexeme * pointer);
+struct Lexeme * symbolStatementAssign(struct Lexeme * pointer);
+struct Lexeme * symbolStatementLabel(struct Lexeme * pointer);
+struct Lexeme * symbolStatement(struct Lexeme * pointer);
 
 
 /*========================================*/
@@ -119,8 +119,8 @@ Create New Token Function
     Return:
         pointer to a empty and new token structure
 */
-struct Token * createNewToken(){
-    struct Token * temp = malloc(sizeof(struct Token));
+struct Lexeme * createNewToken(){
+    struct Lexeme * temp = malloc(sizeof(struct Lexeme));
     if (temp == NULL){
         printError("Not Enough Memory", NULL, NULL);
     }
@@ -136,7 +136,7 @@ Read Source Function
     Argument:
         pointer - allows you to continue writing on the buffer.
 */
-void readSource(struct Token * pointer){
+void readSource(struct Lexeme * pointer){
     if (pointer == NULL){
         pointer = createNewToken();
         tokenList = pointer;
@@ -205,7 +205,7 @@ Add Label Function
         nameToken - token which stores the label name
         nextToken - token which stores the semicolon for the label statement
 */
-void addLabel(struct Token * nameToken, struct Token * nextToken){
+void addLabel(struct Lexeme * nameToken, struct Lexeme * nextToken){
     //second declaration for the same label name will over write the previous one
     struct Label * p = labelList;
     while (p->next != NULL){
@@ -230,7 +230,7 @@ Go To Label Function
     Return:
         pointer to the semicolon.
 */
-struct Token * gotoLabel(char * name){
+struct Lexeme * gotoLabel(char * name){
     struct Label * p = labelList;
     while ((p = p->next) != NULL){
         if (strcmp(name, p->labelName->value) == 0){
@@ -316,7 +316,7 @@ Check Lexeme Function
     Return:
         True if same
 */
-bool checkLexeme(struct Token * token, char * compareTo){
+bool checkLexeme(struct Lexeme * token, char * compareTo){
     if (token == NULL){
         return false;
     }
@@ -328,7 +328,7 @@ Get Lexeme Function
     Return:
         lexeme itself as string (char[])
 */
-char * getLexeme(struct Token * token){
+char * getLexeme(struct Lexeme * token){
     return token->value;
 }
 
@@ -372,7 +372,7 @@ Although the professor said we can have all the keywords reserved, so therefore 
 all the keywords can be <id>. That means you may have a variable named using any keywords.
 */
 
-struct Token * symbolFactor(struct Token * pointer, long * writeBack){
+struct Lexeme * symbolFactor(struct Lexeme * pointer, long * writeBack){
     // <factor> -> id | int_constant | (<expr>)
     // HARD
     long value = 0;
@@ -395,7 +395,7 @@ struct Token * symbolFactor(struct Token * pointer, long * writeBack){
     return pointer->next;
 }
 
-struct Token * symbolTerm(struct Token * pointer, long * writeBack){
+struct Lexeme * symbolTerm(struct Lexeme * pointer, long * writeBack){
     // <term> -> <factor> { * <factor>}
     // HARD
     long value = 0;
@@ -413,7 +413,7 @@ struct Token * symbolTerm(struct Token * pointer, long * writeBack){
     return pointer;
 }
 
-struct Token * symbolExpr(struct Token * pointer, long * writeBack){
+struct Lexeme * symbolExpr(struct Lexeme * pointer, long * writeBack){
     // <expr> -> <term> { ( + | - ) <term> } 
     // HARD
     long value = 0;
@@ -435,7 +435,7 @@ struct Token * symbolExpr(struct Token * pointer, long * writeBack){
     return pointer;
 }
 
-struct Token * symbolStatementPrint(struct Token * pointer){
+struct Lexeme * symbolStatementPrint(struct Lexeme * pointer){
     // <s_print> -> print <expr>
     // SOFT
     if (!checkLexeme(pointer, "print")){
@@ -454,7 +454,7 @@ struct Token * symbolStatementPrint(struct Token * pointer){
     return pointer;    
 }
 
-struct Token * symbolStatementGoTo(struct Token * pointer){
+struct Lexeme * symbolStatementGoTo(struct Lexeme * pointer){
     // <s_goto> -> goto <id>
     // SOFT
     if (!checkLexeme(pointer, "goto")){
@@ -466,7 +466,7 @@ struct Token * symbolStatementGoTo(struct Token * pointer){
     }
 
     // HARD
-    // We need to check the semicolon here rather than in executeProgram() function
+    // We need to check the semicolon here rather than in computeParse() function
     // Because the reading pointer will jump away after return.
     if (pointer->next->next != NULL && !checkLexeme(pointer->next->next, ";")){
         printError("Syntax: '<s_goto> -> goto <id> ;' Expecting ';'.", "<s_goto>", pointer->value);
@@ -476,7 +476,7 @@ struct Token * symbolStatementGoTo(struct Token * pointer){
 }
 
 
-struct Token * symbolStatementIfPositive(struct Token * pointer){
+struct Lexeme * symbolStatementIfPositive(struct Lexeme * pointer){
     // <s_ifpos> -> ifpos <expr> goto <id>
     // SOFT
     if (!checkLexeme(pointer, "ifpos")){
@@ -500,7 +500,7 @@ struct Token * symbolStatementIfPositive(struct Token * pointer){
         printError("Syntax: '<s_ifpos> -> ifpos <expr> goto <id> ;' Expecting '<id>'.", "<s_goto>", pointer->value);
     }
 
-    // We need to check the semicolon here rather than in executeProgram() function
+    // We need to check the semicolon here rather than in computeParse() function
     // Because the reading pointer will jump away after return.
     if (pointer->next->next != NULL && !checkLexeme(pointer->next->next, ";")){
         printError("Syntax: '<s_ifpos> -> ifpos <expr> goto <id> ;' Expecting ';'.", "<s_goto>", pointer->value);
@@ -511,7 +511,7 @@ struct Token * symbolStatementIfPositive(struct Token * pointer){
     return pointer->next->next;
 }
 
-struct Token * symbolStatementAssign(struct Token * pointer){
+struct Lexeme * symbolStatementAssign(struct Lexeme * pointer){
     // <s_assign> -> <id> = <expr>
     // SOFT
     if (pointer->tokenClass != CLASS_LETTER){
@@ -533,7 +533,7 @@ struct Token * symbolStatementAssign(struct Token * pointer){
     return pointer;
 }
 
-struct Token * symbolStatementLabel(struct Token * pointer){
+struct Lexeme * symbolStatementLabel(struct Lexeme * pointer){
     // <s_label> -> label <id>
     // We don't do anything here. Because label parsing is in a separate function.
     // SOFT
@@ -548,8 +548,8 @@ struct Token * symbolStatementLabel(struct Token * pointer){
     return pointer->next->next;
 }
 
-struct Token * symbolStatement(struct Token * pointer){
-        struct Token * onHold = pointer;
+struct Lexeme * symbolStatement(struct Lexeme * pointer){
+        struct Lexeme * onHold = pointer;
         if ((pointer = symbolStatementPrint(pointer)) != onHold){
             return pointer;
         }
@@ -580,7 +580,7 @@ Label Parse Function
     Argument:
         pointer - the starting point to find
 */
-void labelParse(struct Token * pointer){
+void labelParse(struct Lexeme * pointer){
     bool checkLabelToken = true;
     while ((pointer = pointer->next) != NULL){
         if (checkLexeme(pointer, "label") && checkLabelToken){
@@ -612,11 +612,11 @@ void labelParse(struct Token * pointer){
 
 /*
 Compute Parse Function
-    Actually, it does the interpretation.
+    This parsing will compute the result.
     Argument:
         pointer - the starting point
 */
-void executeProgram(struct Token * pointer){
+void computeParse(struct Lexeme * pointer){
     // <program> -> <statement> { ; <statement> } [;]
     while ((pointer->next) != NULL){
         pointer = symbolStatement(pointer->next);
@@ -638,6 +638,6 @@ int main(){
     initialize();
     readSource(NULL);
     labelParse(tokenList);
-    executeProgram(tokenList);
+    computeParse(tokenList);
     return 0;
 }
