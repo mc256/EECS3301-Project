@@ -360,15 +360,16 @@ There is a double semicolon issue in Prof's PDF. We are following these EBNF
 <program> -> <statement> { {;} <statement> } [;]
 
 
-In some situtation, there are too many options can be choosen. In each recursive-descent function, there are two parts.
-1.  "SOFT" means the RDP has NOT YET confirmed the statement is the function's statements.
-    If it cannot regonize the statement, it will return the pointer back to upper level without moving the pointer.
-2.  "HARD" means the RDP has confirmed that the statement is the function's statement. It cannot be other options.
-    If it cannot regonize the statement, it will produce a syntax error.
+In some situation, there are too many options that can be chosen. In each recursive-descent function, there are two parts.
 
+1.  "SOFT" means the RDP has NOT YET confirmed the statement exists in the functions' statements.
+    If it cannot recognize the statement, it will return the pointer back to upper level without moving the pointer.
 
-Although the professor said we can have all the keywords reserved, 
-in this implementation, all the keywords can be <id>. That means you may have variable named using any keywords.
+2.  "HARD" means the RDP has confirmed that the statement exists in the functions' statement.It cannot be anything other than this option.
+    If it didn't recognize the statement, it will produce a syntax error.
+
+Although the professor said we can have all the keywords reserved, so therefore in this implementation,
+all the keywords can be <id>. That means you may have a variable named using any keywords.
 */
 
 struct Token * symbolFactor(struct Token * pointer, long * writeBack){
