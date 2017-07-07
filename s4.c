@@ -656,7 +656,7 @@ void computeParse(struct Lexeme * pointer){
         if (pointer == NULL){
             break;
         }else if (!checkLexeme(pointer, ";")){
-            printError("Syntax: Statement CANNOT Be Resolved.", "<s_label>", pointer->value);
+            printError("Syntax: Statement CANNOT Be Resolved.", "<program>", pointer->value);
         }
     }
 }
