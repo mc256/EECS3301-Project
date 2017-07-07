@@ -10,7 +10,7 @@ COMMENT: This is a public test file shared by all group member.;
 COMMENT: Compute and print basic expression;
 print (2 - 1) * 6 + 5;
 
-COMMENT: Variable assigntion;
+COMMENT: Assign variables;
 a = (3+22);
 b = a - 3;
 print b;
