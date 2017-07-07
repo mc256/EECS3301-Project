@@ -31,7 +31,7 @@ struct Lexeme{
     struct Lexeme * next;
 };
 
-struct Lexeme * tokenList;
+struct Lexeme * lexemeList;
 
 struct Label {
     struct Lexeme * labelName;
@@ -119,7 +119,7 @@ char * createNewLexemeString(){
 Create New Lexeme Structure Function
     Allocate memory space for lexeme structure. One lexeme structure contains one lexeme and its character class.
     Return:
-        pointer to a empty and new token structure
+        pointer to a empty and new lexeme structure
 */
 struct Lexeme * createNewLexeme(){
     struct Lexeme * temp = malloc(sizeof(struct Lexeme));
@@ -131,9 +131,10 @@ struct Lexeme * createNewLexeme(){
     return temp;
 }
 
+
 /*
 Read Source Function
-    Read script from standard input. And store it in buffer (tokenList).
+    Read script from standard input. And store it in buffer (lexemeList).
     This is like a light compiling process.
     Argument:
         pointer - allows you to continue writing on the buffer.
@@ -141,7 +142,7 @@ Read Source Function
 void readSource(struct Lexeme * pointer){
     if (pointer == NULL){
         pointer = createNewLexeme();
-        tokenList = pointer;
+        lexemeList = pointer;
     }
 
     bool appendLexeme = false;
@@ -154,17 +155,21 @@ void readSource(struct Lexeme * pointer){
                 pointer->tokenClass = CLASS_DIGIT;
                 appendLexeme = true;
             }            
-            pointer->value[pointer->length ++] = c;
-            pointer->value[pointer->length] = '\0';
+            if (pointer->length < MAX_LEXEME_LENGTH){ // avoid out of index problem
+                pointer->value[pointer->length ++] = c;
+                pointer->value[pointer->length] = '\0';
+            }
         }else if (isalpha(c)) {
             if (!appendLexeme){
                 pointer->next = createNewLexeme();
                 pointer = pointer->next;
                 pointer->tokenClass = CLASS_LETTER;
                 appendLexeme = true;
-            }            
-            pointer->value[pointer->length ++] = c;
-            pointer->value[pointer->length] = '\0';
+            }        
+            if (pointer->length < MAX_LEXEME_LENGTH){ // avoid out of index problem    
+                pointer->value[pointer->length ++] = c;
+                pointer->value[pointer->length] = '\0';
+            }
         }else if (ispunct(c)){
             pointer->next = createNewLexeme();
             pointer = pointer->next;
@@ -177,7 +182,6 @@ void readSource(struct Lexeme * pointer){
             continue;
         }
     }
-
 }
 
 /*========================================*/
@@ -204,24 +208,24 @@ struct Label * createNewLabel(){
 Add Label Function
     Add label to list. Over write if it exists.
     Argument:
-        nameToken - token which stores the label name
-        nextToken - token which stores the semicolon for the label statement
+        labelName - the lexeme structure which stores the label name
+        nextComment - the lexeme structure which stores the semicolon for the label statement
 */
-void addLabel(struct Lexeme * nameToken, struct Lexeme * nextToken){
+void addLabel(struct Lexeme * labelName, struct Lexeme * nextComment){
     //second declaration for the same label name will over write the previous one
     struct Label * p = labelList;
     while (p->next != NULL){
         p = p->next;
-        if (strcmp(nameToken->value, p->labelName->value) == 0){
-            p->nextCommand = nextToken;
+        if (strcmp(labelName->value, p->labelName->value) == 0){
+            p->nextCommand = nextComment;
             return;
         }
     }
     p->next = createNewLabel();
     p = p->next;
     
-    p->labelName = nameToken;
-    p->nextCommand = nextToken;
+    p->labelName = labelName;
+    p->nextCommand = nextComment;
 }
 
 /*
@@ -311,18 +315,18 @@ long getVariable(char * name){
 
 /*
 Check Lexeme Function
-    Confirm if the token is what we want.
+    Confirm if the lexeme is what we want.
     Argument:
-        token - token structure
+        lexeme - lexeme structure
         compareTo - lexeme
     Return:
         True if same
 */
-bool checkLexeme(struct Lexeme * token, char * compareTo){
-    if (token == NULL || token->value == NULL || compareTo == NULL){
+bool checkLexeme(struct Lexeme * lexeme, char * compareTo){
+    if (lexeme == NULL || lexeme->value == NULL || compareTo == NULL){
         return false;
     }
-    return strcmp(token->value, compareTo) == 0;
+    return strcmp(lexeme->value, compareTo) == 0;
 }
 
 /*
@@ -330,8 +334,8 @@ Get Lexeme Function
     Return:
         lexeme itself as string (char[])
 */
-char * getLexeme(struct Lexeme * token){
-    return token->value;
+char * getLexeme(struct Lexeme * lexeme){
+    return lexeme->value;
 }
 
 
@@ -666,7 +670,7 @@ void computeParse(struct Lexeme * pointer){
 int main(){
     initialize();
     readSource(NULL);
-    labelParse(tokenList);
-    computeParse(tokenList);
+    labelParse(lexemeList);
+    computeParse(lexemeList);
     return 0;
 }
