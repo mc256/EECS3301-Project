@@ -17,19 +17,19 @@ print b;
 
 COMMENT: Skip statements using goto label;
 c = 33;
-goto l1;
+goto tag1;
 c = c - 1;
-label l1;
+label tag1;
 print c;
 
 COMMENT: Conditional loops using ifpos;
 d = 0;
-label l2;
+label tag2;
 d = d + 1;
 print d;
-ifpos 4-d goto l2;
+ifpos 4-d goto tag2;
 
 COMMENT: Special cases;
-label l3;;;;
+label tag3;;;;
 print = 54;
 print print + 1
