@@ -33,22 +33,6 @@ struct Lexeme{
 
 struct Lexeme * lexemeList;
 
-struct Label {
-    struct Lexeme * labelName;
-    struct Lexeme * nextCommand;
-    struct Label * next;
-};
-
-struct Label * labelList;
-
-struct Variable {
-    char * variableName;
-    long variableValue;
-    struct Variable * next;
-};
-
-struct Variable * variableList;
-
 // RDP functions
 struct Lexeme * symbolFactor(struct Lexeme * pointer, long * writeBack);
 struct Lexeme * symbolTerm(struct Lexeme * pointer, long * writeBack);
@@ -79,21 +63,6 @@ void printError(char * error, char * symbol, char * tokenValue){
     printf("\t%s\n", error);
     exit(1);
 }
-
-/*
-Initialize Function
-    Initialize memory for storing labels and variables.
-*/
-void initialize(){
-    labelList = malloc(sizeof(struct Label));
-    variableList = malloc(sizeof(struct Variable));
-    if (labelList == NULL || variableList == NULL){
-        printError("Not Enough Memory", NULL, NULL);
-    }
-    labelList->next = NULL;
-    variableList->next = NULL;
-}
-
 
 /*========================================*/
 /*        Buffer & Lexical Analysis       */
@@ -182,131 +151,7 @@ void readSource(struct Lexeme * pointer){
             continue;
         }
     }
-}
 
-/*========================================*/
-/*               Label List               */
-/*========================================*/
-
-/*
-Create New Label Function
-    Allocates memory for label structure.
-    Return:
-        Label structure
-*/
-struct Label * createNewLabel(){
-    struct Label * temp = malloc(sizeof(struct Label *));
-    if (temp == NULL){
-        printError("Not Enough Memory", NULL, NULL);
-    }
-    temp->next = NULL;
-    return temp;
-}
-
-
-/*
-Add Label Function
-    Add label to list. Over write if it exists.
-    Argument:
-        labelName - the lexeme structure which stores the label name
-        nextComment - the lexeme structure which stores the semicolon for the label statement
-*/
-void addLabel(struct Lexeme * labelName, struct Lexeme * nextComment){
-    //second declaration for the same label name will over write the previous one
-    struct Label * p = labelList;
-    while (p->next != NULL){
-        p = p->next;
-        if (strcmp(labelName->value, p->labelName->value) == 0){
-            p->nextCommand = nextComment;
-            return;
-        }
-    }
-    p->next = createNewLabel();
-    p = p->next;
-    
-    p->labelName = labelName;
-    p->nextCommand = nextComment;
-}
-
-/*
-Go To Label Function
-    return the pointer to the semicolon of the label statement. Therefore the RDP can execute next command.
-    Argument:
-        name - of the label
-    Return:
-        pointer to the semicolon.
-*/
-struct Lexeme * gotoLabel(char * name){
-    struct Label * p = labelList;
-    while ((p = p->next) != NULL){
-        if (strcmp(name, p->labelName->value) == 0){
-            return p->nextCommand;
-        }
-    }
-    printError("Runtime: Lable Not Found",  "label name searching process, for", name);
-    return NULL;
-}
-
-
-/*========================================*/
-/*            Variable List               */
-/*========================================*/
-
-/*
-Create New Variable Function
-    Allocate memory for Variable structure.
-    Return:
-        Variable structure.
-*/
-struct Variable * createNewVariable(){
-    struct Variable * temp = malloc(sizeof(struct Variable));
-    if (temp == NULL){
-        printError("Runtime: Not Enough Memory", NULL, NULL);
-    }
-    temp->next = NULL;
-    return temp;
-}
-
-/*
-Set Variable Function
-    Set the value of a variable. If the variable exists, change its value.
-    Argument:
-        name - variable name
-        value - value of the variable
-*/
-void setVariable(char * name, long value){
-    struct Variable * p = variableList;
-    while (p->next != NULL){
-        p = p->next;
-        if (strcmp(name, p->variableName) == 0){
-            p->variableValue = value;
-            return;
-        }
-    }
-    p->next = createNewVariable();
-    p = p->next;
-
-    p->variableName = name;
-    p->variableValue = value;
-}
-
-/*
-Get Variable Function
-    Get the value of a variable.
-    Argument:
-        name - variable name
-    Return:
-        value of the variable
-*/
-long getVariable(char * name){
-    struct Variable * p = variableList;
-    while ((p = p->next) != NULL){
-        if (strcmp(name, p->variableName) == 0)   {
-            return p->variableValue;
-        }
-    }
-    printError("Variable Not Defined", "variable searching process, for", name);
-    return 0;
 }
 
 /*========================================*/
@@ -384,6 +229,7 @@ all the keywords can be <id>. That means you can have a variable name same as an
 struct Lexeme * symbolFactor(struct Lexeme * pointer, long * writeBack){
     // <factor> -> id | int_constant | (<expr>)
     // HARD
+    printf("  Enter <factor>\n");
     long value = 0;
     if (checkLexeme(pointer, "(")){
         long cb = 0;
@@ -394,19 +240,21 @@ struct Lexeme * symbolFactor(struct Lexeme * pointer, long * writeBack){
         }
         * writeBack = value;
     }else if (pointer->tokenClass == CLASS_LETTER){
-        value = getVariable(pointer->value);
+        //value = getVariable(pointer->value);
     }else if (pointer->tokenClass == CLASS_DIGIT) {
         value = atol(pointer->value);
     }else{
             printError("Syntax: CANNOT Find a valid 'id | int_constant | (<expr>)'", "<factor>", pointer->value);
     }
     *writeBack = value;
+    printf("  Exit <factor>\n");
     return pointer->next;
 }
 
 struct Lexeme * symbolTerm(struct Lexeme * pointer, long * writeBack){
     // <term> -> <factor> { * <factor>}
     // HARD
+    printf("  Enter <term>\n");
     long value = 0;
     pointer = symbolFactor(pointer, &value);
     for (;;){
@@ -419,12 +267,14 @@ struct Lexeme * symbolTerm(struct Lexeme * pointer, long * writeBack){
         }
     }
     *writeBack = value;
+    printf("  Exit <term>\n");
     return pointer;
 }
 
 struct Lexeme * symbolExpr(struct Lexeme * pointer, long * writeBack){
     // <expr> -> <term> { ( + | - ) <term> } 
     // HARD
+    printf("  Enter <expr>\n");
     long value = 0;
     pointer = symbolTerm(pointer, &value);
     for (;;){
@@ -441,6 +291,7 @@ struct Lexeme * symbolExpr(struct Lexeme * pointer, long * writeBack){
         }
     }
     *writeBack = value;
+    printf("  Exit <expr>\n");
     return pointer;
 }
 
@@ -456,9 +307,10 @@ struct Lexeme * symbolStatementPrint(struct Lexeme * pointer){
     }
 
     // HARD
+    printf(" Enter <s_print>\n");
     long value = 0;
     pointer = symbolExpr(pointer->next, &value);
-    printf("%ld\n", value);
+    //printf("%ld\n", value);
 
     return pointer;    
 }
@@ -475,13 +327,14 @@ struct Lexeme * symbolStatementGoTo(struct Lexeme * pointer){
     }
 
     // HARD
+    printf(" Enter <s_goto>\n");
     // We need to check the semicolon here rather than in computeParse() function
     // Because the reading pointer will jump away after return.
     if (pointer->next->next != NULL && !checkLexeme(pointer->next->next, ";")){
         printError("Syntax: '<s_goto> -> goto <id> ;' Expecting ';'.", "<s_goto>", pointer->value);
     }
 
-    return gotoLabel(pointer->next->value);
+    return pointer->next->next;
 }
 
 
@@ -498,6 +351,7 @@ struct Lexeme * symbolStatementIfPositive(struct Lexeme * pointer){
     }
 
     // HARD
+    printf(" Enter <s_ifpos>\n");
     long value = 0;
     pointer = symbolExpr(pointer->next, &value);
 
@@ -515,7 +369,7 @@ struct Lexeme * symbolStatementIfPositive(struct Lexeme * pointer){
         printError("Syntax: '<s_ifpos> -> ifpos <expr> goto <id> ;' Expecting ';'.", "<s_goto>", pointer->value);
     }   
     if (value > 0){
-        return gotoLabel(pointer->next->value);
+        return pointer->next->next;
     }
     return pointer->next->next;
 }
@@ -534,10 +388,9 @@ struct Lexeme * symbolStatementAssign(struct Lexeme * pointer){
     }
 
     // HARD
+    printf(" Enter <s_assign>\n");
     long value = 0;
     pointer = symbolExpr(pointer->next->next, &value);
-
-    setVariable(name, value);
 
     return pointer;
 }
@@ -554,6 +407,7 @@ struct Lexeme * symbolStatementLabel(struct Lexeme * pointer){
     }
 
     // HARD
+    printf(" Enter <s_label>\n");
     return pointer->next->next;
 }
 
@@ -568,6 +422,7 @@ struct Lexeme * symbolStatementComment(struct Lexeme * pointer){
     }
 
     // HARD
+    printf(" Enter <s_comment>\n");
     while ((pointer = pointer->next) != NULL){
         if (checkLexeme(pointer, ";")){
             return pointer;
@@ -581,21 +436,27 @@ struct Lexeme * symbolStatement(struct Lexeme * pointer){
     
     struct Lexeme * onHold = pointer;
     if ((pointer = symbolStatementPrint(pointer)) != onHold){
+        printf(" Exit <s_print>\n");
         return pointer;
     }
     if ((pointer = symbolStatementGoTo(pointer)) != onHold){
+        printf(" Exit <s_goto>\n");
         return pointer;
     }
     if ((pointer = symbolStatementIfPositive(pointer)) != onHold){
+        printf(" Exit <s_ifpos>\n");
         return pointer;
     }
     if ((pointer = symbolStatementAssign(pointer)) != onHold){
+        printf(" Exit <s_assign>\n");
         return pointer;
     }
     if ((pointer = symbolStatementLabel(pointer)) != onHold){
+        printf(" Exit <s_label>\n");
         return pointer;
     }
     if ((pointer = symbolStatementComment(pointer)) != onHold){
+        printf(" Exit <s_comment>\n");
         return pointer;
     }
     // HARD
@@ -608,42 +469,6 @@ struct Lexeme * symbolStatement(struct Lexeme * pointer){
 /*========================================*/
 
 /*
-Label Parse Function
-    Find all the labels and save them in the label list.
-    Argument:
-        pointer - the starting point to find
-*/
-void labelParse(struct Lexeme * pointer){
-    bool checkLabelToken = true;
-    while ((pointer = pointer->next) != NULL){
-        if (checkLexeme(pointer, "label") && checkLabelToken){
-            // Check the next two Tokens
-            // <id> [;]
-            if (pointer->next == NULL){
-                printError("Syntax: '<s_label> -> label <id> ;' Expecting <id>", "<s_label>", pointer->next->value);
-            }
-            
-            if (pointer->next->tokenClass != CLASS_LETTER){
-                checkLabelToken = false;
-                continue;
-            }
-
-            if (pointer->next->next != NULL && !checkLexeme(pointer->next->next, ";")){
-                printError("Syntax: '<s_label> -> label <id> ;' Expecting ';'", "<s_label>", pointer->next->next->value);
-            }
-
-            addLabel(pointer->next,pointer->next->next);
-
-        }else if (checkLexeme(pointer, ";")){
-            checkLabelToken = true;
-        }else{
-            checkLabelToken = false;
-        }
-    }
-}
-
-
-/*
 Compute Parse Function
     This parsing will compute the result.
     Argument:
@@ -651,6 +476,7 @@ Compute Parse Function
 */
 void computeParse(struct Lexeme * pointer){
     // <program> -> <statement> { ; <statement> } [;]
+    printf("Enter <program>\n");
     while ((pointer->next) != NULL){
         pointer = symbolStatement(pointer->next);
         if (pointer == NULL){
@@ -659,6 +485,7 @@ void computeParse(struct Lexeme * pointer){
             printError("Syntax: Statement CANNOT Be Resolved.", "<s_label>", pointer->value);
         }
     }
+    printf("Enter <program>\n");
 }
 
 
@@ -668,9 +495,7 @@ void computeParse(struct Lexeme * pointer){
 
 //Main Function
 int main(){
-    initialize();
     readSource(NULL);
-    labelParse(lexemeList);
     computeParse(lexemeList);
     return 0;
 }
