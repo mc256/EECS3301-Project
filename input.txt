@@ -1,0 +1,35 @@
+COMMENT: EECS 3301 Project 1 Version A;
+COMMENT:;
+COMMENT:    Jun Lin Chen    chen256@my.yorku.ca;
+COMMENT:    Vishal Malik    vishal27@my.yorku.ca;
+COMMENT:    Tong Wu         malan52.82@gmail.com;
+COMMENT:=======================================================;
+COMMENT: This is a public test file shared by all group member.;
+
+
+COMMENT: Compute and print basic expression;
+print (2 - 1) * 6 + 5;
+
+COMMENT: Variable assigntion;
+a = (3+22);
+b = a - 3;
+print b;
+
+COMMENT: Skip statements using goto label;
+c = 33;
+goto l1;
+c = c - 1;
+label l1;
+print c;
+
+COMMENT: Conditional loops using ifpos;
+d = 0;
+label l2;
+d = d + 1;
+print d;
+ifpos 4-d goto l2;
+
+COMMENT: Special cases;
+label l3;;;;
+print = 54;
+print print + 1
