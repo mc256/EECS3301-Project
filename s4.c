@@ -363,7 +363,7 @@ There is a double semicolon issue in Prof's PDF. So after discussing with Prof w
 <s_label> -> label <id>
 
 <statement> -> <s_print> |<s_assign> |<s_label> |<s_goto> |<s_ifpos>
-<program> -> <statement> { {;} <statement> } [;]
+<program> -> <statement> { {;} <statement> } {[;]}
 
 We also add a comment feature.
 <s_comment> -> COMMENT: <anything except semicolon>
@@ -650,7 +650,7 @@ Compute Parse Function
         pointer - the starting point
 */
 void computeParse(struct Lexeme * pointer){
-    // <program> -> <statement> { ; <statement> } [;]
+    // <program> -> <statement> { ; <statement> } {[;]}
     while ((pointer->next) != NULL){
         pointer = symbolStatement(pointer->next);
         if (pointer == NULL){
