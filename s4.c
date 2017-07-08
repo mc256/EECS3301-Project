@@ -390,7 +390,7 @@ struct Lexeme * symbolFactor(struct Lexeme * pointer, long * writeBack){
         pointer = symbolExpr(pointer->next, &cb);
         value = value + cb;
         if (!checkLexeme(pointer, ")")){
-            printError("Syntax: Expecting Right Parentheses for '(<expr>).'", "<factor>", pointer->value);
+            printError("Syntax: Expecting Right Parenthesis for '(<expr>).'", "<factor>", pointer->value);
         }
         * writeBack = value;
     }else if (pointer->tokenClass == CLASS_LETTER){

@@ -208,7 +208,7 @@ There is a double semicolon issue in Prof's PDF. So after discussing with Prof w
 <s_label> -> label <id>
 
 <statement> -> <s_print> |<s_assign> |<s_label> |<s_goto> |<s_ifpos>
-<program> -> <statement> { {;} <statement> } [;]
+<program> -> <statement> { {;} <statement> } {[;]}
 
 We also add a comment feature.
 <s_comment> -> COMMENT: <anything except semicolon>
@@ -236,7 +236,7 @@ struct Lexeme * symbolFactor(struct Lexeme * pointer, long * writeBack){
         pointer = symbolExpr(pointer->next, &cb);
         value = value + cb;
         if (!checkLexeme(pointer, ")")){
-            printError("Syntax: Expecting Right Parentheses for '(<expr>).'", "<factor>", pointer->value);
+            printError("Syntax: Expecting Right Parenthesis for '(<expr>).'", "<factor>", pointer->value);
         }
         * writeBack = value;
     }else if (pointer->tokenClass == CLASS_LETTER){
@@ -475,7 +475,7 @@ Compute Parse Function
         pointer - the starting point
 */
 void computeParse(struct Lexeme * pointer){
-    // <program> -> <statement> { ; <statement> } [;]
+    // <program> -> <statement> { ; <statement> } {[;]}
     printf("Enter <program>\n");
     while ((pointer->next) != NULL){
         pointer = symbolStatement(pointer->next);
